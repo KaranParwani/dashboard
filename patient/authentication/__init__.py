@@ -18,9 +18,13 @@ class TokenManager:
     @classmethod
     def create_access_token(cls, data: dict):
         """Create an access token."""
-        return cls.create_token(data, timedelta(minutes=int(ACCESS_TOKEN_EXPIRY)), "access")
+        return cls.create_token(
+            data, timedelta(minutes=int(ACCESS_TOKEN_EXPIRY)), "access"
+        )
 
     @classmethod
     def create_refresh_token(cls, data: dict):
         """Create a refresh token."""
-        return cls.create_token(data, timedelta(days=int(REFRESH_TOKEN_EXPIRY)), "refresh")
+        return cls.create_token(
+            data, timedelta(days=int(REFRESH_TOKEN_EXPIRY)), "refresh"
+        )
