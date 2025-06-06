@@ -58,19 +58,23 @@ class DatabaseManager:
                     sys.exit(1)
 
     def get_session(self):
-        """Create and return a new database session."""
+        """Ensure database is connected and return a session."""
         if not self.session_factory:
             raise RuntimeError("Database not connected. Call connect() first.")
         return self.session_factory()
 
+    def get_database_session(self):
+        """Yield a database session for FastAPI's dependency injection."""
+        session = self.get_session()
+        try:
+            yield session
+        finally:
+            session.close()  # Ensure proper cleanup
+
+    def get_class(self, class_name):
+        """Get the class object for defined tables"""
+        return getattr(self.base.classes, class_name, None)
+
 
 # Initialize the database manager
 db_manager = DatabaseManager(DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
-
-# Connect to the database
-db_manager.connect()
-
-# Access ORM classes
-Patients = db_manager.base.classes.patients
-ContactDetails = db_manager.base.classes.contact_details
-
