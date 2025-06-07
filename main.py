@@ -1,4 +1,7 @@
+import os
+
 import uvicorn
+from dotenv import load_dotenv
 from jose import JWTError
 from fastapi import FastAPI
 from starlette import status
@@ -12,11 +15,14 @@ from patient.routes.admin import admin_router
 from patient.routes.chatbot import openai_router
 from patient.routes.patient import patient_router
 
-from config import HOST, PORT
+from config import HOST, PORT, ALLOW_ORIGINS
 from patient.services.admin import add_super_admin
 from patient.services.database import db_manager
 
 app = FastAPI(title="Patient Assistant API")
+
+# Load environment variables
+load_dotenv(dotenv_path="config/.env")
 
 
 @app.on_event("startup")
@@ -70,17 +76,10 @@ async def validation_exception_handler(
         content=jsonable_encoder(response),
     )
 
-
-# To allow API calls from
-origins = [
-    "http://localhost:5173",
-]
-
-
-# Middleware between Frontend and Backend
+# Middleware between Frontend and Backend``a
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=ALLOW_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -89,6 +88,7 @@ app.add_middleware(
 app.include_router(patient_router, prefix="/patients", tags=["Patient"])
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(openai_router, prefix="/openai", tags=["Open AI"])
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host=HOST, port=int(PORT))
