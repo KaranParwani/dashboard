@@ -1,6 +1,7 @@
 import datetime
+from typing import Any
 
-from starlette.responses import JSONResponse
+import sqlalchemy
 
 from patient.services.database import db_manager
 from patient.services.exceptions import response_structure
@@ -41,18 +42,94 @@ class PatientsManager:
             )
             self.patient_id = details["patient_id"] if details["patient_id"] else None
 
-    async def get_patients_details(self) -> JSONResponse:
+    @staticmethod
+    def serialize_patient(patients):
+        if isinstance(patients, sqlalchemy.engine.row.Row):
+            # Single patient, serialize directly
+            patient, contact = patients
+            return {
+                "patient_id": patient.patient_id,
+                "first_name": patient.first_name,
+                "middle_name": patient.middle_name,
+                "last_name": patient.last_name,
+                "blood_type": patient.blood_type,
+                "date_of_birth": patient.date_of_birth,
+                "created_at": patient.created_at,
+                "gender": patient.gender,
+                "active": patient.active,
+                "contacts": {
+                    "contact_id": contact.contact_id,
+                    "phone_number": contact.phone_number,
+                    "email": contact.email,
+                    "address_1": contact.address_1,
+                    "address_2": contact.address_2,
+                },
+            }
+        elif isinstance(patients, list):
+            # Multiple patients, serialize each one
+            return [
+                {
+                    "patient_id": patient.patient_id,
+                    "first_name": patient.first_name,
+                    "middle_name": patient.middle_name,
+                    "last_name": patient.last_name,
+                    "blood_type": patient.blood_type,
+                    "date_of_birth": patient.date_of_birth,
+                    "created_at": patient.created_at,
+                    "gender": patient.gender,
+                    "active": patient.active,
+                    "contacts": {
+                        "contact_id": contact.contact_id,
+                        "phone_number": contact.phone_number,
+                        "email": contact.email,
+                        "address_1": contact.address_1,
+                        "address_2": contact.address_2,
+                    },
+                }
+                for patient, contact in patients
+            ]
+        else:
+            # Invalid input
+            raise ValueError("Invalid input: Expected a tuple or a list of tuples")
+
+    async def get_patients_details(self, patient_id: int = None) -> Any:
         """
 
         :return:
         """
         try:
-            patients = self.session.query(self.patients).filter(active=True).all()
+            print(patient_id)
+            if patient_id:
+                patients = (
+                    self.session.query(self.patients, self.contacts)
+                    .join(
+                        self.contacts,
+                        self.patients.patient_id == self.contacts.patient_id,
+                    )
+                    .filter(
+                        self.patients.patient_id == patient_id,
+                        self.patients.active == True,
+                    )
+                    .first()
+                )
+            else:
+                patients = (
+                    self.session.query(self.patients, self.contacts)
+                    .join(
+                        self.contacts,
+                        self.patients.patient_id == self.contacts.patient_id,
+                    )
+                    .filter(self.patients.active == True)
+                    .all()
+                )
 
             if not patients:
                 return response_structure(404, "No patient details were found")
 
-            return patients
+            patient_details = self.serialize_patient(patients)
+            return response_structure(
+                200, "Fetched Patient Details", data=patient_details
+            )
 
         except Exception as e:
             return response_structure(404, f"Something went wrong : {e}")
@@ -111,7 +188,10 @@ class PatientsManager:
                 # Update the patient's details
                 updated_patient_rows = (
                     self.session.query(self.patients)
-                    .filter(self.patients.patient_id == self.patient_id and self.patient_id.active == True)
+                    .filter(
+                        self.patients.patient_id == self.patient_id
+                        and self.patient_id.active == True
+                    )
                     .update(
                         {
                             "first_name": self.first_name,
@@ -121,7 +201,7 @@ class PatientsManager:
                             "gender": self.gender,
                             "blood_type": self.blood_type,
                             "updated_at": datetime.datetime.now(),
-                            "updated_by": admin_id
+                            "updated_by": admin_id,
                         },
                         synchronize_session="fetch",
                     )
@@ -130,7 +210,10 @@ class PatientsManager:
                 # Update the contact details
                 updated_contact_rows = (
                     self.session.query(self.contacts)
-                    .filter(self.contacts.patient_id == self.patient_id, self.contacts.active == True)
+                    .filter(
+                        self.contacts.patient_id == self.patient_id,
+                        self.contacts.active == True,
+                    )
                     .update(
                         {
                             "phone_number": self.phone_number,
@@ -138,7 +221,7 @@ class PatientsManager:
                             "address_1": self.address_1,
                             "address_2": self.address_2,
                             "updated_by": admin_id,
-                            "updated_at": datetime.datetime.now()
+                            "updated_at": datetime.datetime.now(),
                         },
                         synchronize_session="fetch",
                     )
@@ -162,17 +245,19 @@ class PatientsManager:
 
     async def delete_patient_record(self, patient_id: int, admin_id: int):
         try:
-            print(patient_id, admin_id)
             if patient_id and admin_id:
                 # Update the patient's details
                 updated_patient_rows = (
                     self.session.query(self.patients)
-                    .filter(self.patients.patient_id == patient_id and self.patients.active == True)
+                    .filter(
+                        self.patients.patient_id == patient_id
+                        and self.patients.active == True
+                    )
                     .update(
                         {
                             "active": False,
                             "updated_at": datetime.datetime.now(),
-                            "updated_by": admin_id
+                            "updated_by": admin_id,
                         },
                         synchronize_session="fetch",
                     )
@@ -181,12 +266,15 @@ class PatientsManager:
                 # Update the contact details
                 updated_contact_rows = (
                     self.session.query(self.contacts)
-                    .filter(self.contacts.patient_id == patient_id, self.contacts.active == True)
+                    .filter(
+                        self.contacts.patient_id == patient_id,
+                        self.contacts.active == True,
+                    )
                     .update(
                         {
                             "active": False,
                             "updated_by": admin_id,
-                            "updated_at": datetime.datetime.now()
+                            "updated_at": datetime.datetime.now(),
                         },
                         synchronize_session="fetch",
                     )
@@ -206,9 +294,7 @@ class PatientsManager:
             else:
                 return response_structure(404, "Please pass Admin ID and Patient ID")
 
-
         except Exception as e:
             self.session.rollback()
             error_message = str(e).split("\n")[0].split(") ")[1].replace('"', "")
             return response_structure(404, f"Something went wrong : {error_message}")
-
