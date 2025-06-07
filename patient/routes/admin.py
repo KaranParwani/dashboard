@@ -30,10 +30,18 @@ def admin_login(credentials: AdminLogin):
 
         # Generate tokens
         access_token = TokenManager.create_access_token(
-            data={"sub": user.user_email, "user_type": user.user_type, "user_id": user.user_id}
+            data={
+                "sub": user.user_email,
+                "user_type": user.user_type,
+                "user_id": user.user_id,
+            }
         )
         refresh_token = TokenManager.create_refresh_token(
-            data={"sub": user.user_email, "user_type": user.user_type, "user_id": user.user_id}
+            data={
+                "sub": user.user_email,
+                "user_type": user.user_type,
+                "user_id": user.user_id,
+            }
         )
 
         return {
