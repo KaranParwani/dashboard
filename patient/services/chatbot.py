@@ -3,6 +3,7 @@ from fastapi import HTTPException
 
 from config import OPENAI_API_KEY
 
+
 class OpenAI:
 
     def __init__(self, question: str):
