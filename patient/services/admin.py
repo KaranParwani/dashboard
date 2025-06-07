@@ -1,9 +1,8 @@
 from datetime import datetime
 
-from fastapi import Depends, HTTPException
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import HTTPException
+from fastapi.security import HTTPBearer
 from jose import jwt, JWTError
-from sqlalchemy.orm import Session
 
 from patient.services.database import db_manager
 from patient.services.password_encrypt import PasswordProcessor
