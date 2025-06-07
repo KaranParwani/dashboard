@@ -35,13 +35,15 @@ OPENAI_API_KEY = os.getenv("OPEN_AI_KEY")
 ALLOW_ORIGINS = os.getenv("ALLOW_ORIGINS")
 
 # Initialize Redis connection
-REDIS_HOST = os.getenv('REDIS_HOST')
+REDIS_HOST = os.getenv("REDIS_HOST")
 REDIS_PORT = os.getenv("REDIS_PORT", "6379")
-REDIS_DB = os.getenv('REDIS_DB')
+REDIS_DB = os.getenv("REDIS_DB")
 
 try:
     REDIS_PORT = int(REDIS_PORT)
 except (TypeError, ValueError):
     raise ValueError(f"Invalid REDIS_PORT value: {REDIS_PORT}. Ensure it's an integer.")
 
-REDIS = aioredis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}", decode_responses=True)
+REDIS = aioredis.from_url(
+    f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}", decode_responses=True
+)
