@@ -79,7 +79,7 @@ async def validation_exception_handler(
 # Middleware between Frontend and Backend``a
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOW_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -91,4 +91,5 @@ app.include_router(openai_router, prefix="/openai", tags=["Open AI"])
 
 
 if __name__ == "__main__":
+    print(ALLOW_ORIGINS)
     uvicorn.run(app, host=HOST, port=int(PORT))

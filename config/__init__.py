@@ -2,6 +2,7 @@ import os
 
 from dotenv import load_dotenv
 import redis.asyncio as aioredis
+from urllib.parse import quote_plus
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
@@ -15,7 +16,7 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
 
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL = f"postgresql://{quote_plus(str(DB_USER))}:{quote_plus(str(DB_PASSWORD))}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 HOST = os.getenv("APP_HOST")
 PORT = os.getenv("APP_PORT")

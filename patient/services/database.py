@@ -1,12 +1,18 @@
 import sys
 import time
-from urllib.parse import quote_plus
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.automap import automap_base
 
-from config import DB_USER, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT
+from config import DATABASE_URL, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
+
+import os
+print("DB_USER:", os.getenv("DB_USER"))
+print("DB_PASSWORD:", os.getenv("DB_PASSWORD"))
+print("DB_HOST:", os.getenv("DB_HOST"))
+print("DB_PORT:", os.getenv("DB_PORT"))
+print("DB_NAME:", os.getenv("DB_NAME"))
 
 
 class DatabaseManager:
@@ -21,9 +27,10 @@ class DatabaseManager:
         self.engine = None
         self.session_factory = None
 
-    def get_connection_string(self) -> str:
+    @staticmethod
+    def get_connection_string() -> str:
         """Build the database connection string."""
-        return f"postgresql://{quote_plus(self.user)}:{quote_plus(self.password)}@{self.host}:{self.port}/{self.db_name}"
+        return DATABASE_URL
 
     def connect(self, max_attempts=3, retry_delay=30) -> None:
         """Establish a connection to the database."""
@@ -77,4 +84,5 @@ class DatabaseManager:
 
 
 # Initialize the database manager
+print(DATABASE_URL)
 db_manager = DatabaseManager(DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
